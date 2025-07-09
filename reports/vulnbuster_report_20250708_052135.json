@@ -1,0 +1,26 @@
+{
+  "metadata": {
+    "generator": "VulnBuster",
+    "version": "1.0",
+    "generation_time": "2025-07-08T05:21:35.291117",
+    "target_url": "test.apk",
+    "mode": "android",
+    "modules": [],
+    "advisor_enabled": false,
+    "chain_enabled": false,
+    "scan_date": "2025-07-08T05:21:35.285750"
+  },
+  "summary": {
+    "total_findings": 0,
+    "risk_distribution": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "low": 0,
+      "info": 0
+    },
+    "vulnerability_types": {},
+    "ai_analysis": null
+  },
+  "findings": []
+}

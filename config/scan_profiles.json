@@ -1,0 +1,47 @@
+{
+  "recon": {
+    "description": "Reconnaissance mode - passive discovery and enumeration",
+    "modules": ["subdomain_brute", "fingerprint", "portscan", "git_leaks"],
+    "ai_mode": "basic",
+    "oob_listener": true,
+    "verbose": true,
+    "output_format": ["json", "html"]
+  },
+  "exploit": {
+    "description": "Exploitation mode - active testing and exploitation",
+    "modules": ["all"],
+    "ai_mode": "full",
+    "auto_exploit": "upload",
+    "auto_poc": true,
+    "chain": true,
+    "mutate": true,
+    "oob_listener": true,
+    "verbose": true,
+    "output_format": ["json", "html", "markdown"]
+  },
+  "bounty-hardcore": {
+    "description": "Hardcore bug bounty mode - maximum coverage and automation",
+    "modules": ["all"],
+    "ai_mode": "full",
+    "autopilot": true,
+    "auto_exploit": "upload",
+    "auto_poc": true,
+    "chain": true,
+    "mutate": true,
+    "oob_listener": true,
+    "payload_learn": true,
+    "plugins_enabled": true,
+    "verbose": true,
+    "debug": true,
+    "output_format": ["all"]
+  },
+  "ctf": {
+    "description": "CTF mode - focused on common CTF challenges",
+    "modules": ["ssrf", "lfi_exploiter", "jwt_analyzer", "upload_path_brute"],
+    "ai_mode": "full",
+    "auto_poc": true,
+    "chain": true,
+    "verbose": true,
+    "output_format": ["json", "markdown"]
+  }
+} 

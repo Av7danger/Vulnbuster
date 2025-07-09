@@ -1,0 +1,31 @@
+{
+  "metadata": {
+    "target_url": "Unknown",
+    "scan_date": "2025-07-08 04:08:17",
+    "scan_duration": "Unknown",
+    "modules": [
+      "sqli"
+    ],
+    "generator": "WebBlood Scanner",
+    "version": "1.0.0"
+  },
+  "statistics": {
+    "critical": 0,
+    "high": 0,
+    "medium": 0,
+    "low": 0,
+    "info": 0
+  },
+  "findings": [],
+  "summary": {
+    "total_vulnerabilities": 0,
+    "risk_distribution": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "low": 0,
+      "info": 0
+    },
+    "module_coverage": {}
+  }
+}

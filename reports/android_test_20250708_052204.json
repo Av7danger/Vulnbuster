@@ -1,0 +1,124 @@
+{
+  "scan_info": {
+    "apk_path": "test.apk",
+    "scan_date": "2025-07-08T05:22:04.370284",
+    "scanner": "VulnBuster Android Scanner"
+  },
+  "results": {
+    "metadata": {
+      "package_name": "Unknown",
+      "version_code": "Unknown",
+      "version_name": "Unknown",
+      "min_sdk": "Unknown",
+      "target_sdk": "Unknown",
+      "permissions": [],
+      "activities": [],
+      "services": [],
+      "receivers": [],
+      "providers": []
+    },
+    "security_issues": [
+      {
+        "type": "No SSL Pinning",
+        "severity": "medium",
+        "description": "App does not implement SSL certificate pinning"
+      }
+    ],
+    "api_keys": [
+      {
+        "type": "base64",
+        "value": "usesCleartextTraffic=",
+        "file": "AndroidManifest.xml",
+        "severity": "medium"
+      },
+      {
+        "type": "google_api",
+        "value": "AIzaSyBlaBlaBlaBlaBlaBlaBlaBlaBlaBlaBla",
+        "file": "res\\values\\strings.xml",
+        "severity": "medium"
+      },
+      {
+        "type": "base64",
+        "value": "AIzaSyBlaBlaBlaBlaBlaBlaBlaBlaBlaBlaBla",
+        "file": "res\\values\\strings.xml",
+        "severity": "medium"
+      }
+    ],
+    "endpoints": [
+      "api.example.com",
+      "app",
+      "com",
+      "https://api.example.com/v1/users"
+    ],
+    "components": [],
+    "permissions": [],
+    "manifest_analysis": {
+      "package_info": {
+        "package_name": "Unknown",
+        "version_code": "Unknown",
+        "version_name": "Unknown",
+        "min_sdk": "Unknown",
+        "target_sdk": "Unknown",
+        "permissions": [],
+        "activities": [],
+        "services": [],
+        "receivers": [],
+        "providers": []
+      },
+      "security_flags": {},
+      "permission_analysis": {
+        "total_permissions": 0,
+        "dangerous_permissions": [],
+        "permission_list": []
+      },
+      "component_analysis": {}
+    },
+    "wordlist": [
+      "api_key",
+      "App",
+      "version",
+      "intent",
+      "app_name",
+      "utf",
+      "READ_EXTERNAL_STORAGE",
+      "manifest",
+      "versionName",
+      "true",
+      "activity",
+      "versionCode",
+      "usesCleartextTraffic",
+      "test",
+      "debuggable",
+      "category",
+      "MAIN",
+      "permission",
+      "name",
+      "package",
+      "Test",
+      "application",
+      "filter",
+      "encoding",
+      "INTERNET",
+      "LAUNCHER",
+      "MainActivity",
+      "uses",
+      "string",
+      "app",
+      "xml",
+      "com",
+      "action",
+      "AIzaSyBlaBlaBlaBlaBlaBlaBlaBlaBlaBlaBla",
+      "resources",
+      "Test App",
+      "exported",
+      "android"
+    ]
+  },
+  "findings": [
+    {
+      "type": "No SSL Pinning",
+      "severity": "medium",
+      "description": "App does not implement SSL certificate pinning"
+    }
+  ]
+}

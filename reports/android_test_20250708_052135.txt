@@ -1,0 +1,11 @@
+VulnBuster Android APK Scan Report
+==================================================
+
+Package: Unknown
+Version: Unknown
+SDK: Unknown - Unknown
+
+Security Issues:
+--------------------
+[MEDIUM] No SSL Pinning: App does not implement SSL certificate pinning
+

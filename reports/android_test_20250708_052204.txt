@@ -1,0 +1,23 @@
+VulnBuster Android APK Scan Report
+==================================================
+
+Package: Unknown
+Version: Unknown
+SDK: Unknown - Unknown
+
+Security Issues:
+--------------------
+[MEDIUM] No SSL Pinning: App does not implement SSL certificate pinning
+
+API Keys Found:
+--------------------
+[base64] usesCleartextTraffic=... in AndroidManifest.xml
+[google_api] AIzaSyBlaBlaBlaBlaBlaBlaBlaBlaBlaBlaBla... in res\values\strings.xml
+[base64] AIzaSyBlaBlaBlaBlaBlaBlaBlaBlaBlaBlaBla... in res\values\strings.xml
+
+Endpoints Found:
+--------------------
+- api.example.com
+- app
+- com
+- https://api.example.com/v1/users

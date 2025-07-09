@@ -1,0 +1,28 @@
+{
+  "metadata": {
+    "generator": "VulnBuster",
+    "version": "1.0",
+    "generation_time": "2025-07-08T04:53:11.967004",
+    "target_url": "https://httpbin.org/get",
+    "mode": "web",
+    "modules": [
+      "sqli"
+    ],
+    "advisor_enabled": true,
+    "chain_enabled": false,
+    "scan_date": "2025-07-08T04:53:11.961746"
+  },
+  "summary": {
+    "total_findings": 0,
+    "risk_distribution": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "low": 0,
+      "info": 0
+    },
+    "vulnerability_types": {},
+    "ai_analysis": null
+  },
+  "findings": []
+}

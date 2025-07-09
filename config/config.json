@@ -1,0 +1,165 @@
+{
+  "scanner": {
+    "timeout": 10,
+    "max_retries": 3,
+    "concurrent_requests": 10,
+    "user_agent": "WebBlood/1.0",
+    "follow_redirects": true,
+    "verify_ssl": false
+  },
+  "crawler": {
+    "max_depth": 3,
+    "max_pages": 100,
+    "exclude_patterns": [
+      "logout",
+      "admin",
+      "api",
+      "\.pdf$",
+      "\.jpg$",
+      "\.png$",
+      "\.gif$"
+    ],
+    "include_patterns": [
+      "\.php$",
+      "\.asp$",
+      "\.aspx$",
+      "\.jsp$",
+      "\.html$"
+    ]
+  },
+  "modules": {
+    "sqli": {
+      "enabled": true,
+      "timeout": 15,
+      "max_payloads": 50
+    },
+    "xss": {
+      "enabled": true,
+      "timeout": 10,
+      "max_payloads": 30
+    },
+    "idor": {
+      "enabled": true,
+      "timeout": 10,
+      "test_values": [1, 2, 999, 1000]
+    },
+    "bac": {
+      "enabled": true,
+      "timeout": 10,
+      "admin_endpoints": [
+        "/admin",
+        "/admin/users",
+        "/admin/settings"
+      ]
+    },
+    "csrf": {
+      "enabled": true,
+      "timeout": 10
+    },
+    "upload": {
+      "enabled": true,
+      "timeout": 15,
+      "max_file_size": 1048576
+    },
+    "cmdinj": {
+      "enabled": true,
+      "timeout": 15
+    },
+    "lfi": {
+      "enabled": true,
+      "timeout": 10
+    },
+    "redirect": {
+      "enabled": true,
+      "timeout": 10
+    },
+    "cors": {
+      "enabled": true,
+      "timeout": 10
+    },
+    "header_injection": {
+      "enabled": true,
+      "timeout": 10
+    },
+    "clickjacking": {
+      "enabled": true,
+      "timeout": 10
+    },
+    "websocket": {
+      "enabled": true,
+      "timeout": 10
+    },
+    "ssti": {
+      "enabled": true,
+      "timeout": 10
+    },
+    "xxe": {
+      "enabled": true,
+      "timeout": 10
+    },
+    "dom_xss": {
+      "enabled": true,
+      "timeout": 10
+    }
+  },
+  "payloads": {
+    "mutation": {
+      "enabled": true,
+      "techniques": [
+        "encoding",
+        "case_swapping",
+        "null_byte",
+        "comment_injection"
+      ]
+    },
+    "context_aware": true,
+    "max_mutations": 5
+  },
+  "reporting": {
+    "formats": ["html", "json", "markdown"],
+    "output_dir": "reports",
+    "include_payloads": true,
+    "include_evidence": true,
+    "severity_threshold": "low"
+  },
+  "session": {
+    "enabled": false,
+    "login_url": "",
+    "username": "",
+    "password": "",
+    "csrf_token": "",
+    "session_cookie": ""
+  },
+  "proxy": {
+    "enabled": false,
+    "http": "",
+    "https": "",
+    "auth": {
+      "username": "",
+      "password": ""
+    }
+  },
+  "oob": {
+    "enabled": false,
+    "dns_listener": {
+      "enabled": false,
+      "domain": "oob.webblood.local",
+      "port": 53
+    },
+    "http_listener": {
+      "enabled": false,
+      "host": "0.0.0.0",
+      "port": 8080
+    }
+  },
+  "plugins": {
+    "enabled": true,
+    "directory": "plugins",
+    "auto_load": true
+  },
+  "logging": {
+    "level": "INFO",
+    "file": "webblood.log",
+    "console": true
+  }
+} 

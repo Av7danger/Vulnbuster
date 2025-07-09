@@ -1,0 +1,41 @@
+{
+  "scan_info": {
+    "apk_path": "test.apk",
+    "scan_date": "2025-07-08T05:21:35.256528",
+    "scanner": "VulnBuster Android Scanner"
+  },
+  "results": {
+    "metadata": {
+      "package_name": "Unknown",
+      "version_code": "Unknown",
+      "version_name": "Unknown",
+      "min_sdk": "Unknown",
+      "target_sdk": "Unknown",
+      "permissions": [],
+      "activities": [],
+      "services": [],
+      "receivers": [],
+      "providers": []
+    },
+    "security_issues": [
+      {
+        "type": "No SSL Pinning",
+        "severity": "medium",
+        "description": "App does not implement SSL certificate pinning"
+      }
+    ],
+    "api_keys": [],
+    "endpoints": [],
+    "components": [],
+    "permissions": [],
+    "manifest_analysis": {},
+    "wordlist": []
+  },
+  "findings": [
+    {
+      "type": "No SSL Pinning",
+      "severity": "medium",
+      "description": "App does not implement SSL certificate pinning"
+    }
+  ]
+}

@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>VulnBuster Web Scan Report</title>
+    <style>
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f8f9fa; color: #222; margin: 0; padding: 0; }
+        .container { max-width: 900px; margin: 40px auto; background: #fff; border-radius: 8px; box-shadow: 0 2px 8px #0001; padding: 32px; }
+        h1, h2, h3 { color: #2c3e50; }
+        .summary { background: #eaf6fb; border-left: 4px solid #3498db; padding: 16px; margin-bottom: 24px; }
+        .meta { font-size: 0.95em; color: #555; margin-bottom: 24px; }
+        table { width: 100%; border-collapse: collapse; margin-bottom: 32px; }
+        th, td { padding: 10px 8px; border-bottom: 1px solid #e1e1e1; }
+        th { background: #f4f8fb; text-align: left; }
+        tr.critical { background: #ffeaea; }
+        tr.high { background: #fff3cd; }
+        tr.medium { background: #eaf6fb; }
+        tr.low { background: #f8f9fa; }
+        .remediation { color: #155724; font-size: 0.98em; }
+        .exploit-chain { background: #f9f6e7; border-left: 4px solid #e67e22; padding: 10px; margin-bottom: 12px; }
+        .custom-rule { background: #f0f7fa; border-left: 4px solid #17a2b8; padding: 10px; margin-bottom: 12px; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>VulnBuster Web Scan Report</h1>
+    <div class="summary">
+        <strong>Executive Summary:</strong> {{ report.ai_summary }}<br>
+        <strong>Risk Score:</strong> {{ report.risk_score }}/10
+    </div>
+    <div class="meta">
+        <strong>Target:</strong> {{ report.metadata.target_url }}<br>
+        <strong>Scan Date:</strong> {{ report.metadata.scan_date }}<br>
+        <strong>Modules:</strong> {{ report.metadata.modules|join(', ') }}<br>
+        <strong>URLs Discovered:</strong> {{ report.metadata.urls_discovered }}<br>
+        <strong>Vulnerabilities Found:</strong> {{ report.metadata.vulnerabilities_found }}
+    </div>
+    <h2>Findings</h2>
+    <table>
+        <tr>
+            <th>Type</th>
+            <th>URL</th>
+            <th>Description</th>
+            <th>Remediation</th>
+        </tr>
+        {% for finding in report.findings %}
+        <tr class="{{ finding.risk|default('medium') }}">
+            <td>{{ finding.type|upper }}</td>
+            <td>{{ finding.url }}</td>
+            <td>{{ finding.rule or finding.description or finding.chain or finding.value or '-' }}</td>
+            <td class="remediation">{{ finding.remediation or '-' }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+    {% set chains = report.findings | selectattr('type', 'equalto', 'exploit_chain') | list %}
+    {% if chains %}
+    <h2>Exploit Chains</h2>
+    {% for chain in chains %}
+    <div class="exploit-chain">
+        <strong>Chain:</strong> {{ chain.chain|join(' → ') }}<br>
+        <strong>Description:</strong> {{ chain.description }}<br>
+        <strong>Risk:</strong> {{ chain.risk|capitalize }}<br>
+        <strong>Remediation:</strong> {{ chain.remediation }}
+    </div>
+    {% endfor %}
+    {% endif %}
+    {% set custom_rules = report.findings | selectattr('type', 'equalto', 'custom_rule') | list %}
+    {% if custom_rules %}
+    <h2>Custom Rule Matches</h2>
+    {% for cr in custom_rules %}
+    <div class="custom-rule">
+        <strong>Rule:</strong> {{ cr.rule }}<br>
+        <strong>URL:</strong> {{ cr.url }}<br>
+        <strong>Value:</strong> {{ cr.value }}<br>
+        <strong>Remediation:</strong> {{ cr.remediation }}
+    </div>
+    {% endfor %}
+    {% endif %}
+</div>
+</body>
+</html> 

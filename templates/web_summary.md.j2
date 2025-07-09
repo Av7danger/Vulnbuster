@@ -1,0 +1,45 @@
+# VulnBuster Web Scan Report
+
+**Executive Summary:** {{ report.ai_summary }}
+
+**Risk Score:** {{ report.risk_score }}/10
+
+---
+
+**Target:** {{ report.metadata.target_url }}  
+**Scan Date:** {{ report.metadata.scan_date }}  
+**Modules:** {{ report.metadata.modules|join(', ') }}  
+**URLs Discovered:** {{ report.metadata.urls_discovered }}  
+**Vulnerabilities Found:** {{ report.metadata.vulnerabilities_found }}
+
+---
+
+## Findings
+
+| Type | URL | Description | Remediation |
+|------|-----|-------------|-------------|
+{% for finding in report.findings %}
+| {{ finding.type|upper }} | {{ finding.url }} | {{ finding.rule or finding.description or finding.chain or finding.value or '-' }} | {{ finding.remediation or '-' }} |
+{% endfor %}
+
+{% set chains = report.findings | selectattr('type', 'equalto', 'exploit_chain') | list %}
+{% if chains %}
+## Exploit Chains
+{% for chain in chains %}
+- **Chain:** {{ chain.chain|join(' → ') }}
+- **Description:** {{ chain.description }}
+- **Risk:** {{ chain.risk|capitalize }}
+- **Remediation:** {{ chain.remediation }}
+{% endfor %}
+{% endif %}
+
+{% set custom_rules = report.findings | selectattr('type', 'equalto', 'custom_rule') | list %}
+{% if custom_rules %}
+## Custom Rule Matches
+{% for cr in custom_rules %}
+- **Rule:** {{ cr.rule }}
+- **URL:** {{ cr.url }}
+- **Value:** {{ cr.value }}
+- **Remediation:** {{ cr.remediation }}
+{% endfor %}
+{% endif %} 

@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Android APK Security Report</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+<div class="container my-4">
+    <h1 class="mb-4">Android APK Security Report</h1>
+    <h3>Manifest Summary</h3>
+    <pre>{{ scan_results.manifest_analysis | tojson(indent=2) }}</pre>
+    <h3>Permissions</h3>
+    <ul>
+        {% for perm in scan_results.manifest_analysis.permissions %}
+        <li>{{ perm }}</li>
+        {% endfor %}
+    </ul>
+    <h3>Exported Components</h3>
+    <ul>
+        {% for comp in scan_results.manifest_analysis.exported %}
+        <li>{{ comp }}</li>
+        {% endfor %}
+    </ul>
+    <h3>Class Names (sample)</h3>
+    <pre>{{ scan_results.class_names | join('\n') }}</pre>
+    <h3>Method Names (sample)</h3>
+    <pre>{{ scan_results.method_names | join('\n') }}</pre>
+    <h3>Dangerous APIs</h3>
+    <ul>
+        {% for api in scan_results.dangerous_apis %}
+        <li>{{ api }}</li>
+        {% endfor %}
+    </ul>
+    <h3>Embedded URLs</h3>
+    <ul>
+        {% for url in scan_results.embedded.urls %}
+        <li>{{ url }}</li>
+        {% endfor %}
+    </ul>
+    <h3>Embedded Secrets</h3>
+    <ul>
+        {% for secret in scan_results.embedded.secrets %}
+        <li>{{ secret }}</li>
+        {% endfor %}
+    </ul>
+    <h3>Resource Secrets</h3>
+    <ul>
+        {% for secret in scan_results.resource_secrets %}
+        <li>{{ secret }}</li>
+        {% endfor %}
+    </ul>
+    <hr>
+    <p class="text-muted">Generated on {{ now }}</p>
+</div>
+</body>
+</html> 

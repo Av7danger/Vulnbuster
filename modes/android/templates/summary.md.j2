@@ -1,0 +1,43 @@
+# Android APK Security Report
+
+## Manifest Summary
+```
+{{ scan_results.manifest_analysis | tojson(indent=2) }}
+```
+
+## Permissions
+{% for perm in scan_results.manifest_analysis.permissions %}- {{ perm }}
+{% endfor %}
+
+## Exported Components
+{% for comp in scan_results.manifest_analysis.exported %}- {{ comp }}
+{% endfor %}
+
+## Class Names (sample)
+```
+{{ scan_results.class_names | join('\n') }}
+```
+
+## Method Names (sample)
+```
+{{ scan_results.method_names | join('\n') }}
+```
+
+## Dangerous APIs
+{% for api in scan_results.dangerous_apis %}- {{ api }}
+{% endfor %}
+
+## Embedded URLs
+{% for url in scan_results.embedded.urls %}- {{ url }}
+{% endfor %}
+
+## Embedded Secrets
+{% for secret in scan_results.embedded.secrets %}- {{ secret }}
+{% endfor %}
+
+## Resource Secrets
+{% for secret in scan_results.resource_secrets %}- {{ secret }}
+{% endfor %}
+
+---
+*Generated on {{ now }}* 
