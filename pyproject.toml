@@ -1,0 +1,251 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "vulnbuster"
+version = "1.0.0"
+description = "AI-Powered Offensive Security Framework for CTFs, Bug Bounties, and Red Teams"
+readme = "README.md"
+license = {text = "MIT"}
+authors = [
+    {name = "Av7danger", email = "av7danger@protonmail.com"}
+]
+maintainers = [
+    {name = "Av7danger", email = "av7danger@protonmail.com"}
+]
+keywords = ["security", "penetration-testing", "vulnerability-scanner", "ai", "offensive-security", "ctf", "bug-bounty"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Information Technology",
+    "Intended Audience :: System Administrators",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Security",
+    "Topic :: System :: Networking :: Monitoring",
+    "Topic :: Software Development :: Testing",
+]
+requires-python = ">=3.11"
+dependencies = [
+    "aiohttp>=3.8.0",
+    "requests>=2.28.0",
+    "beautifulsoup4>=4.11.0",
+    "lxml>=4.9.0",
+    "colorama>=0.4.5",
+    "rich>=12.0.0",
+    "jinja2>=3.1.0",
+    "pyyaml>=6.0",
+    "cryptography>=3.4.0",
+    "paramiko>=2.11.0",
+    "dnspython>=2.2.0",
+    "python-nmap>=0.7.1",
+    "androguard>=3.4.0",
+    "frida-tools>=9.0.0",
+    "openai>=0.27.0",
+    "anthropic>=0.3.0",
+    "mistralai>=0.0.7",
+    "shodan>=1.28.0",
+    "censys>=2.2.0",
+    "dnsdb>=2.0.0",
+    "sqlmap>=1.6.0",
+    "nikto>=2.1.6",
+    "dirb>=2.22.0",
+    "nuclei>=2.8.0",
+    "subfinder>=2.5.0",
+    "httpx>=0.24.0",
+    "playwright>=1.35.0",
+    "selenium>=4.10.0",
+    "pypykatz>=0.5.0",
+    "ropgadget>=6.0.0",
+    "angr>=9.2.0",
+    "pwntools>=4.8.0",
+    "binwalk>=2.3.0",
+    "pefile>=2022.5.30",
+    "capstone>=4.0.2",
+    "keystone-engine>=0.9.2",
+    "unicorn>=2.0.1",
+    "qiling>=1.4.0",
+    "volatility3>=2.4.0",
+    "yara-python>=4.2.0",
+    "peid>=1.0.0",
+    "strings>=3.0.0",
+    "file>=5.41.0",
+    "exiftool>=12.0.0",
+    "ffmpeg-python>=0.2.0",
+    "pillow>=9.3.0",
+    "opencv-python>=4.6.0",
+    "numpy>=1.23.0",
+    "pandas>=1.5.0",
+    "matplotlib>=3.6.0",
+    "seaborn>=0.12.0",
+    "plotly>=5.10.0",
+    "networkx>=2.8.0",
+    "scikit-learn>=1.1.0",
+    "tensorflow>=2.10.0",
+    "torch>=1.12.0",
+    "transformers>=4.20.0",
+    "sentence-transformers>=2.2.0",
+    "spacy>=3.4.0",
+    "nltk>=3.8.0",
+    "textblob>=0.17.0",
+    "vaderSentiment>=3.3.0",
+    "wordcloud>=1.8.0",
+    "gensim>=4.2.0",
+    "fastapi>=0.85.0",
+    "uvicorn>=0.18.0",
+    "streamlit>=1.22.0",
+    "gradio>=3.15.0",
+    "dash>=2.6.0",
+    "flask>=2.2.0",
+    "django>=4.1.0",
+    "sqlalchemy>=1.4.0",
+    "alembic>=1.8.0",
+    "redis>=4.3.0",
+    "celery>=5.2.0",
+    "pytest>=7.1.0",
+    "pytest-asyncio>=0.21.0",
+    "pytest-cov>=4.0.0",
+    "black>=22.6.0",
+    "isort>=5.10.0",
+    "flake8>=5.0.0",
+    "mypy>=0.971.0",
+    "pre-commit>=2.20.0",
+    "tox>=3.26.0",
+    "coverage>=6.4.0",
+    "bandit>=1.7.0",
+    "safety>=2.3.0",
+    "pip-audit>=1.1.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.1.0",
+    "pytest-asyncio>=0.21.0",
+    "pytest-cov>=4.0.0",
+    "black>=22.6.0",
+    "isort>=5.10.0",
+    "flake8>=5.0.0",
+    "mypy>=0.971.0",
+    "pre-commit>=2.20.0",
+    "tox>=3.26.0",
+    "coverage>=6.4.0",
+    "bandit>=1.7.0",
+    "safety>=2.3.0",
+    "pip-audit>=1.1.0",
+]
+full = [
+    "sqlmap>=1.6.0",
+    "nikto>=2.1.6",
+    "dirb>=2.22.0",
+    "nuclei>=2.8.0",
+    "subfinder>=2.5.0",
+    "androguard>=3.4.0",
+    "frida-tools>=9.0.0",
+    "pypykatz>=0.5.0",
+    "ropgadget>=6.0.0",
+    "angr>=9.2.0",
+    "pwntools>=4.8.0",
+    "binwalk>=2.3.0",
+    "volatility3>=2.4.0",
+    "yara-python>=4.2.0",
+]
+
+[project.scripts]
+vulnbuster = "main:main"
+
+[project.urls]
+Homepage = "https://github.com/Av7danger/Vulnbuster"
+Documentation = "https://github.com/Av7danger/Vulnbuster/docs"
+Repository = "https://github.com/Av7danger/Vulnbuster.git"
+"Bug Tracker" = "https://github.com/Av7danger/Vulnbuster/issues"
+"Source Code" = "https://github.com/Av7danger/Vulnbuster"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["*"]
+exclude = ["tests*", "docs*", "examples*", "docker*", ".github*"]
+
+[tool.black]
+line-length = 88
+target-version = ['py311']
+include = '\.pyi?$'
+extend-exclude = '''
+/(
+  # directories
+  \.eggs
+  | \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | build
+  | dist
+)/
+'''
+
+[tool.isort]
+profile = "black"
+multi_line_output = 3
+line_length = 88
+known_first_party = ["vulnbuster"]
+
+[tool.mypy]
+python_version = "3.11"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+disallow_untyped_decorators = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_no_return = true
+warn_unreachable = true
+strict_equality = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py", "*_test.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = [
+    "--strict-markers",
+    "--strict-config",
+    "--cov=vulnbuster",
+    "--cov-report=term-missing",
+    "--cov-report=html",
+    "--cov-report=xml",
+]
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+    "integration: marks tests as integration tests",
+    "unit: marks tests as unit tests",
+]
+
+[tool.coverage.run]
+source = ["vulnbuster"]
+omit = [
+    "*/tests/*",
+    "*/test_*",
+    "*/__pycache__/*",
+    "*/venv/*",
+    "*/env/*",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "if self.debug:",
+    "if settings.DEBUG",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if 0:",
+    "if __name__ == .__main__.:",
+    "class .*\\bProtocol\\):",
+    "@(abc\\.)?abstractmethod",
+] 
