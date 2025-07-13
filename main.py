@@ -646,44 +646,145 @@ class VulnBuster:
             if self.verbose:
                 logging.exception("Plugin execution error details:")
     
-    async def generate_reports(self, results: List[Dict[str, Any]]):
-        """Generate reports using the selected template and client name"""
-        from core.reporter import Reporter
-        mode = self.mode if hasattr(self, 'mode') else 'web'
-        reporter = Reporter(self.config.get('output', 'reports'), mode=mode)
+    async def generate_reports(self, results: List[Dict[str, Any]]) -> Dict[str, Union[str, Path]]:
+        """Generate reports in the specified formats with the selected template and client name.
         
+        This method handles the generation of various report formats (HTML, JSON, Markdown)
+        based on the scan results and configuration. It supports AI-enhanced reporting
+        and custom templates.
+        
+        Args:
+            results: List of scan results to include in the reports.
+            
+        Returns:
+            A dictionary mapping report formats to their file paths.
+            
+        Raises:
+            RuntimeError: If report generation fails and self.verbose is True.
+            ValueError: If no results are provided or reporter initialization fails.
+        """
+        if not results or not isinstance(results, list):
+            error_msg = "No scan results available for report generation"
+            color_print(error_msg, 'warning')
+            raise ValueError(error_msg)
+            
+        try:
+            from core.reporter import Reporter
+        except ImportError as e:
+            error_msg = f"Failed to import reporter module: {e}"
+            color_print(error_msg, 'error')
+            if self.verbose:
+                logging.exception("Reporter import error:")
+            raise ImportError(error_msg) from e
+            
+        # Initialize reporter with safe defaults
+        mode = getattr(self, 'mode', 'web')
+        output_dir = self.config.get('output', 'reports')
+        
+        try:
+            reporter = Reporter(output_dir=output_dir, mode=mode)
+        except Exception as e:
+            error_msg = f"Failed to initialize reporter: {e}"
+            color_print(error_msg, 'error')
+            if self.verbose:
+                logging.exception("Reporter initialization error:")
+            raise RuntimeError(error_msg) from e
+        
+        # Determine report formats
         formats = self.config.get('format', ['all'])
+        if not isinstance(formats, list):
+            formats = [formats] if formats != 'all' else ['html', 'json', 'markdown']
         if 'all' in formats:
             formats = ['html', 'json', 'markdown']
+            
+        # Filter out unsupported formats
+        supported_formats = {'html', 'json', 'markdown'}
+        formats = [f for f in formats if f in supported_formats]
         
-        # Add findings to reporter
+        if not formats:
+            color_print("No valid report formats specified", 'warning')
+            return {}
+        
+        # Add findings to reporter with validation
+        valid_results = []
         for result in results:
-            reporter.add_finding(result)
+            if not isinstance(result, dict):
+                color_print("Skipping invalid result (not a dictionary)", 'warning')
+                continue
+            try:
+                reporter.add_finding(result)
+                valid_results.append(result)
+            except Exception as e:
+                color_print(f"Failed to add finding to report: {e}", 'warning')
+                if self.verbose:
+                    logging.exception("Add finding error:")
         
-        # Set metadata
-        reporter.set_metadata({
-            'target_url': self.target,
-            'mode': self.mode,
-            'modules': self.mode_modules,
-            'advisor_enabled': self.advisor_enabled,
-            'chain_enabled': self.chain_enabled,
-            'scan_date': datetime.now().isoformat()
-        })
+        if not valid_results:
+            color_print("No valid results to include in the report", 'warning')
+            return {}
         
-        # Generate reports
+        # Set comprehensive metadata
+        metadata = {
+            'target_url': self.target or 'unknown',
+            'mode': mode,
+            'modules': getattr(self, 'mode_modules', []),
+            'advisor_enabled': getattr(self, 'advisor_enabled', False),
+            'chain_enabled': getattr(self, 'chain_enabled', False),
+            'scan_date': datetime.utcnow().isoformat(),
+            'report_version': '1.0',
+            'vulnerabilities_found': len([r for r in valid_results if r.get('vulnerable', False)])
+        }
+        
+        try:
+            reporter.set_metadata(metadata)
+        except Exception as e:
+            error_msg = f"Failed to set report metadata: {e}"
+            color_print(error_msg, 'warning')
+            if self.verbose:
+                logging.exception("Metadata setting error:")
+        
+        # Generate reports with error handling for each format
+        report_files = {}
+        
         try:
             report_files = await reporter.generate_reports(
                 formats=formats,
                 use_ai=self.config.get('ai_reports', False),
                 template=self.config.get('report_template'),
-                client_name=self.config.get('client_name')
+                client_name=self.config.get('client_name', 'VulnBuster Client')
             )
             
-            for fmt, report_path in report_files.items():
-                color_print(f"Generated {fmt.upper()} report: {report_path}", 'info')
+            # Log generation results
+            if not report_files:
+                color_print("No reports were generated", 'warning')
+                return {}
                 
+            for fmt, report_path in report_files.items():
+                if report_path and (isinstance(report_path, (str, Path)) and Path(report_path).exists()):
+                    color_print(f"Generated {fmt.upper()} report: {report_path}", 'success')
+                    
+                    # Store report paths in the first valid result
+                    if valid_results and 'reports' not in valid_results[0]:
+                        valid_results[0]['reports'] = {}
+                    valid_results[0]['reports'][fmt] = str(report_path)
+                else:
+                    color_print(f"Failed to generate {fmt.upper()} report", 'warning')
+            
+            return report_files
+            
+        except asyncio.TimeoutError:
+            error_msg = "Report generation timed out"
+            color_print(error_msg, 'error')
+            if self.verbose:
+                logging.error(error_msg)
+            raise RuntimeError(error_msg)
+            
         except Exception as e:
-            color_print(f"Failed to generate reports: {e}", 'warning')
+            error_msg = f"Failed to generate reports: {e}"
+            color_print(error_msg, 'error')
+            if self.verbose:
+                logging.exception("Report generation error:")
+            raise RuntimeError(error_msg) from e
 
 def parse_arguments():
     """Parse command line arguments"""

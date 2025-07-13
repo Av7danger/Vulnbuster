@@ -1,72 +1,202 @@
 """
-Web Mode Scanner - Web application vulnerability scanning
+Enhanced Web Mode Scanner - Advanced web application vulnerability scanning
+
+Features:
+- Comprehensive vulnerability detection with reduced false positives
+- Advanced crawling with JavaScript rendering and authentication
+- AI-powered fuzzing and exploit chain analysis
+- Context-aware payload generation
+- Rate limiting and request throttling
+- Comprehensive logging and metrics
 """
 
 import asyncio
 import logging
-from typing import Dict, Any, List, Optional
-from pathlib import Path
-
-import csv
 import random
-try:
-    from tqdm import tqdm
-except ImportError:
-    tqdm = None
 import re
-import yaml
+import time
+import uuid
+from collections import defaultdict
+from dataclasses import dataclass, field
+from datetime import datetime
+from pathlib import Path
+from typing import Dict, List, Optional, Set, Tuple, Any, Callable, Awaitable
+from urllib.parse import urlencode, parse_qs, urlparse, urljoin, parse_qsl, unquote
 
-from modes.web.crawler import Crawler
-from core.payloads import PayloadEngine
+import aiohttp
+import aiohttp.client_exceptions
+import backoff
+import dns.resolver
+import httpx
+import yaml
+from bs4 import BeautifulSoup
+from fake_useragent import UserAgent
+from tqdm import tqdm
+
+from core.ai_advisor import AIAdvisor
 from core.analyzer import Analyzer
+from core.config import Config
+from core.metrics import ScanMetrics
+from core.payloads import PayloadEngine
+from core.rate_limiter import RateLimiter
 from core.reporter import Reporter
+from core.utils import (extract_emails, extract_ips, extract_js_endpoints,
+                       is_same_domain, normalize_url, random_string)
+from modes.web.ai_fuzzer import AIFuzzer
+from modes.web.auth_manager import AuthManager
+from modes.web.crawler import Crawler
 from modes.web.dynamic_analyzer import DynamicAnalyzer
 from modes.web.oob_manager import OOBManager
-from modes.web.ai_fuzzer import AIFuzzer
-from modes.web.exploit_chain_analyzer import ExploitChainAnalyzer
-from modes.web.auto_remediator import AutoRemediator
-from modes.web.ai_custom_rule_assistant import AICustomRuleAssistant
-from core import ai as mixtral_ai
+from modes.web.session_manager import SessionManager
+from modes.web.signature_detector import SignatureDetector
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.StreamHandler(),
+        logging.FileHandler('vulnbuster_scan.log')
+    ]
+)
+logger = logging.getLogger('web_scanner')
+
+@dataclass
+class ScanContext:
+    """Context for the current scan with shared resources and state."""
+    config: Dict[str, Any]
+    metrics: ScanMetrics = field(default_factory=ScanMetrics)
+    rate_limiter: Optional[RateLimiter] = None
+    session_manager: Optional[SessionManager] = None
+    auth_manager: Optional[AuthManager] = None
+    signature_detector: Optional[SignatureDetector] = None
+
 
 class WebScanner:
+    """Advanced web application security scanner with comprehensive testing capabilities."""
+    
     def __init__(self, config: Dict[str, Any]):
-        self.config = config
-        self.target_url = config.get('target')
-        self.modules = config.get('modules', [])
-        self.verbose = config.get('verbose', False)
-        self.threads = config.get('threads', 10)
-        self.timeout = config.get('timeout', 10)
-        self.crawl_enabled = config.get('crawl', False)
-        self.crawl_depth = config.get('depth', 3)
-        # Advanced crawler options
-        self.crawl_js = config.get('crawl_js', False)
-        self.crawl_sitemap = config.get('crawl_sitemap', True)
-        self.crawl_robots = config.get('crawl_robots', True)
-        self.crawl_login = config.get('crawl_login', False)
-        self.crawl_login_url = config.get('crawl_login_url')
-        self.crawl_login_user = config.get('crawl_login_user')
-        self.crawl_login_pass = config.get('crawl_login_pass')
-        # Initialize components
+        """Initialize the web scanner with configuration.
+        
+        Args:
+            config: Configuration dictionary with scan parameters
+        """
+        self.config = Config(config) if not isinstance(config, Config) else config
+        self.target_url = self.config.get('target')
+        self.modules = self._normalize_modules(self.config.get('modules', []))
+        
+        # Configure logging level
+        log_level = logging.DEBUG if self.config.get('debug', False) else logging.INFO
+        logging.getLogger().setLevel(log_level)
+        
+        # Scan configuration
+        self.threads = self.config.get('threads', 5)
+        self.timeout = self.config.get('timeout', 30)
+        self.user_agent = self.config.get('user_agent', UserAgent().chrome)
+        
+        # Crawling configuration
+        self.crawl_enabled = self.config.get('crawl', True)
+        self.crawl_depth = self.config.get('depth', 3)
+        self.max_pages = self.config.get('max_pages', 100)
+        self.respect_robots = self.config.get('respect_robots', True)
+        
+        # Advanced options
+        self.crawl_js = self.config.get('crawl_js', True)
+        self.crawl_sitemap = self.config.get('crawl_sitemap', True)
+        self.follow_redirects = self.config.get('follow_redirects', True)
+        self.verify_ssl = self.config.get('verify_ssl', False)
+        self.retry_attempts = self.config.get('retry_attempts', 3)
+        
+        # Rate limiting
+        self.rate_limit = self.config.get('rate_limit', 10)  # requests per second
+        
+        # Initialize core components
+        self._init_components()
+        
+        # State tracking
+        self.scan_id = str(uuid.uuid4())
+        self.scan_start_time = datetime.utcnow()
+        self.scan_status = 'pending'
+        self.scan_progress = 0.0
+        self.current_module = None
+        
+        # Results storage
+        self.discovered_urls: Set[str] = set()
+        self.visited_urls: Set[str] = set()
+        self.vulnerabilities: List[Dict] = []
+        self.findings: List[Dict] = []
+        self.metrics = ScanMetrics()
+        
+        # Initialize context
+        self.ctx = ScanContext(
+            config=self.config,
+            metrics=self.metrics,
+            rate_limiter=RateLimiter(rate=self.rate_limit, concurrency=self.threads),
+            session_manager=SessionManager(
+                verify_ssl=self.verify_ssl,
+                follow_redirects=self.follow_redirects,
+                default_headers={'User-Agent': self.user_agent}
+            ),
+            auth_manager=AuthManager(self.config),
+            signature_detector=SignatureDetector()
+        )
+        
+        # Initialize crawler with context
         self.crawler = Crawler(
             base_url=self.target_url,
             max_depth=self.crawl_depth,
-            max_urls=100,
-            session_manager=None
+            max_urls=self.max_pages,
+            session_manager=self.ctx.session_manager,
+            rate_limiter=self.ctx.rate_limiter,
+            respect_robots=self.respect_robots
         )
-        self.ai_fuzzer = AIFuzzer(enabled=config.get('ai_fuzzing', True))
+        
+        logger.info(f"Initialized WebScanner for {self.target_url} with {self.threads} threads")
+    
+    def _init_components(self):
+        """Initialize scanner components."""
+        # AI and analysis components
+        self.ai_fuzzer = AIFuzzer(enabled=self.config.get('ai_fuzzing', True))
         self.payload_engine = PayloadEngine()
         self.analyzer = Analyzer()
-        self.reporter = Reporter(config.get('output', 'reports'))
-        self.dynamic_analyzer = DynamicAnalyzer(headless=True, timeout=self.timeout)
-        self.oob_manager = OOBManager(endpoint=config.get('oob_endpoint'))
-        self.exploit_chain_analyzer = ExploitChainAnalyzer()
-        self.auto_remediator = AutoRemediator()
-        self.ai_custom_rule_assistant = AICustomRuleAssistant()
+        self.ai_advisor = AIAdvisor()
         
-        # Results storage
-        self.discovered_urls = []
-        self.vulnerabilities = []
-        self.scan_results = []
+        # Reporting
+        self.reporter = Reporter(
+            output_dir=self.config.get('output', 'reports'),
+            formats=self.config.get('report_formats', ['html', 'json']),
+            template_dir=self.config.get('template_dir', 'templates')
+        )
+        
+        # Advanced scanning components
+        self.dynamic_analyzer = DynamicAnalyzer(
+            headless=not self.config.get('debug', False),
+            timeout=self.timeout,
+            proxy=self.config.get('proxy')
+        )
+        
+        # OOB and exploit chain analysis
+        if self.config.get('oob_enabled', False):
+            self.oob_manager = OOBManager(
+                endpoint=self.config.get('oob_endpoint'),
+                api_key=self.config.get('oob_api_key')
+            )
+        
+        # Custom rule support
+        self.signature_detector = SignatureDetector(
+            rule_files=self.config.get('custom_rules', [])
+        )
+        
+        logger.debug("Initialized all scanner components")
+    
+    def _normalize_modules(self, modules) -> List[str]:
+        """Normalize and validate module names."""
+        if not modules or 'all' in modules:
+            # Load all available modules
+            modules_dir = Path(__file__).parent / 'modules'
+            return [f.stem for f in modules_dir.glob('*.py') 
+                   if not f.name.startswith('_') and f.is_file()]
+        return [m.lower().strip() for m in modules if m.strip()]
         
     async def scan(self, target: str, modules: List[str], payload_engine: PayloadEngine,
                   via_engine=None, exploit_chain=None) -> List[Dict[str, Any]]:
@@ -83,6 +213,7 @@ class WebScanner:
                 (self._custom_rule_engine, "Custom rule engine"),
                 (self._third_party_framework_detection, "Third-party/framework detection"),
                 (self._auto_poc_generation, "Auto PoC/exploit script generation"),
+                (self._api_security_checks, "API security checks"),
                 (self._generate_reports, "Generating reports"),
             ]
             iterator = tqdm(steps, desc="Web Scan Progress") if tqdm else steps
@@ -97,6 +228,115 @@ class WebScanner:
             logging.error(f"Web scan failed: {e}")
             if self.verbose:
                 logging.exception("Scan error details:")
+            return []
+    
+    async def _dynamic_analysis(self):
+        """Run comprehensive dynamic analysis using headless browser with enhanced capabilities.
+        
+        Performs:
+        - JavaScript execution analysis
+        - DOM-based XSS detection
+        - Client-side storage inspection
+        - Event handler analysis
+        - AJAX/fetch request monitoring
+        - WebSocket analysis
+        - Performance metrics collection
+        """
+        if not self.dynamic_analyzer:
+            logger.warning("Dynamic analyzer not initialized, skipping dynamic analysis")
+            return
+            
+        logger.info("Starting comprehensive dynamic analysis...")
+        
+        try:
+            # Configure analysis options
+            analysis_options = {
+                'enable_javascript': True,
+                'analyze_dom_xss': self.config.get('check_dom_xss', True),
+                'analyze_websockets': self.config.get('check_websockets', True),
+                'analyze_client_storage': self.config.get('check_client_storage', True),
+                'collect_performance_metrics': self.config.get('collect_metrics', False),
+                'max_execution_time': self.timeout * 2  # Allow more time for dynamic analysis
+            }
+            
+            # Process each URL with rate limiting
+            urls_to_analyze = list(self.discovered_urls)[:self.config.get('max_dynamic_urls', 50)]
+            
+            async with self.ctx.rate_limiter:
+                tasks = []
+                for url in urls_to_analyze:
+                    if self._stop_event.is_set():
+                        break
+                        
+                    task = asyncio.create_task(
+                        self._analyze_single_page(url, analysis_options),
+                        name=f"dynamic_analysis_{url}"
+                    )
+                    tasks.append(task)
+                    
+                    # Limit concurrent dynamic analysis tasks
+                    if len(tasks) >= self.threads:
+                        done, pending = await asyncio.wait(
+                            tasks, 
+                            return_when=asyncio.FIRST_COMPLETED
+                        )
+                        tasks = list(pending)
+                
+                # Wait for remaining tasks
+                if tasks:
+                    await asyncio.wait(tasks)
+                    
+            logger.info(f"Completed dynamic analysis of {len(urls_to_analyze)} pages")
+            
+        except asyncio.CancelledError:
+            logger.info("Dynamic analysis was cancelled")
+            raise
+            
+        except Exception as e:
+            logger.error(f"Dynamic analysis failed: {e}", exc_info=self.verbose)
+            self.metrics.errors_encountered += 1
+    
+    async def _analyze_single_page(self, url: str, options: Dict[str, Any]) -> None:
+        """Analyze a single page with the dynamic analyzer."""
+        try:
+            logger.debug(f"Analyzing page: {url}")
+            
+            # Execute dynamic analysis
+            results = await self.dynamic_analyzer.analyze(
+                url=url,
+                **options
+            )
+            
+            if results:
+                # Process and enrich findings
+                enriched_results = []
+                for result in results:
+                    # Add contextual information
+                    result['scan_timestamp'] = datetime.utcnow().isoformat()
+                    result['analysis_type'] = 'dynamic'
+                    result['page_url'] = url
+                    
+                    # Get AI analysis if enabled
+                    if self.ai_enabled:
+                        try:
+                            ai_analysis = await self.ai_advisor.analyze_finding(result)
+                            if ai_analysis:
+                                result['ai_analysis'] = ai_analysis
+                        except Exception as ai_err:
+                            logger.warning(f"AI analysis failed: {ai_err}")
+                    
+                    enriched_results.append(result)
+                
+                # Add to vulnerabilities
+                async with asyncio.Lock():
+                    self.vulnerabilities.extend(enriched_results)
+                    self.metrics.vulnerabilities_found += len(enriched_results)
+                
+                logger.info(f"Found {len(enriched_results)} issues with dynamic analysis on {url}")
+                
+        except Exception as e:
+            logger.error(f"Error analyzing {url}: {e}", exc_info=self.verbose)
+            self.metrics.errors_encountered += 1
             return []
     
     async def _discover_urls(self):
@@ -196,23 +436,50 @@ class WebScanner:
         return modules
     
     async def _import_module(self, module_file: Path):
-        """Import a module from file"""
+        """Import a module from file with enhanced error handling and validation.
+        
+        Args:
+            module_file: Path to the module file to import
+            
+        Returns:
+            The Module class if successful, None otherwise
+        """
         import importlib.util
+        import sys
         
         try:
-            spec = importlib.util.spec_from_file_location(module_file.stem, module_file)
+            module_name = f"vulnbuster.modules.{module_file.stem}"
+            if module_name in sys.modules:
+                return sys.modules[module_name].Module
+                
+            spec = importlib.util.spec_from_file_location(module_name, module_file)
+            if not spec or not spec.loader:
+                raise ImportError(f"Could not load spec for {module_file}")
+                
             module = importlib.util.module_from_spec(spec)
+            sys.modules[module_name] = module
             spec.loader.exec_module(module)
             
-            if hasattr(module, 'Module'):
-                return module.Module
-            else:
-                logging.warning(f"Module {module_file.stem} does not have Module class")
+            if not hasattr(module, 'Module'):
+                logger.warning(f"Module {module_file.stem} does not have required 'Module' class")
                 return None
                 
+            # Validate module interface
+            required_methods = ['run', 'get_info']
+            for method in required_methods:
+                if not hasattr(module.Module, method):
+                    logger.warning(f"Module {module_file.stem} is missing required method: {method}")
+                    return None
+                    
+            logger.debug(f"Successfully imported module: {module_file.stem}")
+            return module.Module
+            
+        except ImportError as e:
+            logger.error(f"Failed to import module {module_file.stem}: {e}", exc_info=self.verbose)
         except Exception as e:
-            logging.error(f"Failed to import module {module_file.stem}: {e}")
-            return None
+            logger.error(f"Unexpected error importing {module_file.stem}: {e}", exc_info=self.verbose)
+            
+        return None
     
     async def _custom_rule_engine(self):
         """
