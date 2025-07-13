@@ -2,9 +2,57 @@
 __pycache__/
 *.py[cod]
 *$py.class
+*.pyo
+*.pyd
+*.so
 
 # C extensions
 *.so
+
+# Environment variables and secrets
+.env
+.env.*
+!.env.example
+secrets.*
+*.key
+*.pem
+*.crt
+*.cert
+*.p12
+*.pfx
+*.p7b
+*.gpg
+*.asc
+*_rsa
+*_dsa
+*_ed25519
+*_ecdsa
+
+# IDE specific files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Logs and databases
+*.log
+*.sql
+*.sqlite
+*.db
+
+# Local development
+.venv/
+venv/
+env/
+ENV/
+
+# Testing
+.coverage
+htmlcov/
+.pytest_cache/
+.mypy_cache/
 
 # Distribution / packaging
 .Python

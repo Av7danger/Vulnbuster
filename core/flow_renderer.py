@@ -1,6 +1,8 @@
 import asyncio
 from typing import List, Dict, Any
 import json
+import sys
+import graphviz
 
 # --- Visual Scan Flow Renderer ---
 async def render_scan_flow(steps: List[Dict[str, Any]]) -> str:
@@ -41,3 +43,32 @@ async def export_flow_json(steps: List[Dict[str, Any]]) -> str:
         'total_steps': len(steps),
         'vuln_count': len([s for s in steps if s.get('type') == 'vuln'])
     }, indent=2) 
+
+"""
+Attack Replay Graph Generator
+Generates DAG of scan → vuln → exploit → result. Outputs .png/.html via Graphviz.
+Usage: --graph-scan-flow
+"""
+def render_flow_graph(scan_flow, output='scan_flow.png'):
+    dot = graphviz.Digraph(comment='Scan Flow')
+    for node in scan_flow['nodes']:
+        dot.node(node['id'], node['label'])
+    for edge in scan_flow['edges']:
+        dot.edge(edge['from'], edge['to'], label=edge.get('label', ''))
+    dot.render(output, view=False, format='png')
+    print(f"[+] Graph rendered to {output}")
+
+def main():
+    import argparse
+    parser = argparse.ArgumentParser(description="Attack Replay Graph Generator")
+    parser.add_argument('--graph-scan-flow', action='store_true', help='Render scan flow graph')
+    parser.add_argument('--input', default='scan_flow.json', help='Path to scan flow JSON')
+    parser.add_argument('--output', default='scan_flow.png', help='Output file (.png or .html)')
+    args = parser.parse_args()
+    if args.graph_scan_flow:
+        with open(args.input) as f:
+            scan_flow = json.load(f)
+        render_flow_graph(scan_flow, args.output)
+
+if __name__ == "__main__":
+    main() 

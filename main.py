@@ -2,6 +2,10 @@
 """
 VulnBuster - Red Team Offensive Exploitation Framework
 Multi-surface vulnerability scanning with AI-assisted advisory
+
+This module provides the main entry point for the VulnBuster application,
+handling command-line arguments, configuration, and orchestration of
+vulnerability scanning components.
 """
 
 import asyncio
@@ -9,9 +13,29 @@ import argparse
 import json
 import logging
 import sys
+from dataclasses import dataclass, field
+from enum import Enum, auto
 from pathlib import Path
-from typing import Dict, Any, Optional, List
+from typing import (
+    Any,
+    Dict,
+    List,
+    Optional,
+    TypedDict,
+    Union,
+    Literal,
+    TypeVar,
+    Generic,
+    AsyncIterator,
+    Callable,
+    Awaitable,
+    cast,
+    no_type_check,
+    overload,
+)
+from typing_extensions import Protocol, runtime_checkable
 from datetime import datetime
+import traceback
 
 # Import core components
 from core.utils import setup_logging, print_banner, color_print
@@ -22,10 +46,56 @@ from core.wordlistgen import WordlistGenerator
 from core.chain import ExploitChain
 from ai.via_engine import VIAEngine
 
+# Type aliases
+JSONType = Union[Dict[str, Any], List[Any], str, int, float, bool, None]
+ConfigDict = Dict[str, Any]
+ScanResult = Dict[str, Any]
+
+class ScanMode(str, Enum):
+    """Enumeration of supported scan modes."""
+    WEB = "web"
+    NETWORK = "network"
+    MOBILE = "mobile"
+    CLOUD = "cloud"
+    ALL = "all"
+
+class ScanStatus(str, Enum):
+    """Enumeration of possible scan statuses."""
+    PENDING = "pending"
+    RUNNING = "running"
+    COMPLETED = "completed"
+    FAILED = "failed"
+    CANCELLED = "cancelled"
+
+class VulnBusterError(Exception):
+    """Base exception class for VulnBuster specific errors."""
+    def __init__(self, message: str, details: Optional[Dict[str, Any]] = None):
+        self.message = message
+        self.details = details or {}
+        super().__init__(self.message)
+
+class ConfigurationError(VulnBusterError):
+    """Raised when there is an error in the configuration."""
+    pass
+
+class ScanError(VulnBusterError):
+    """Raised when there is an error during scanning."""
+    pass
+
+class PluginError(VulnBusterError):
+    """Raised when there is an error with plugins."""
+    pass
+
 class VulnBuster:
-    def __init__(self, config: Dict[str, Any]):
+    def __init__(self, config: ConfigDict):
+        """
+        Initialize the VulnBuster application with the provided configuration.
+
+        Args:
+            config (ConfigDict): The configuration dictionary.
+        """
         self.config = config
-        self.mode = config.get('mode', 'web')
+        self.mode = config.get('mode', ScanMode.WEB)
         self.target = config.get('target')
         self.modules = config.get('modules', [])
         self.verbose = config.get('verbose', False)
@@ -233,8 +303,18 @@ class VulnBuster:
                 logging.exception("Scan error details:")
             return []
     
-    async def _handle_post_scan_actions(self, results: List[Dict[str, Any]]):
-        """Handle post-scan actions like auto-exploitation and PoC generation"""
+    async def _handle_post_scan_actions(self, results: List[Dict[str, Any]]) -> None:
+        """Handle post-scan actions like auto-exploitation and PoC generation.
+        
+        This method coordinates various post-scan activities including auto-exploitation,
+        proof-of-concept generation, payload learning, and plugin execution.
+        
+        Args:
+            results: List of scan results to process.
+            
+        Raises:
+            RuntimeError: If any post-scan action encounters an error and self.verbose is True.
+        """
         try:
             # Auto-exploitation
             if self.auto_exploit and results:
@@ -253,74 +333,318 @@ class VulnBuster:
                 await self._handle_plugin_execution(results)
                 
         except Exception as e:
-            color_print(f"Post-scan actions failed: {e}", 'warning')
+            error_msg = f"Post-scan actions failed: {e}"
+            color_print(error_msg, 'warning')
+            if self.verbose:
+                logging.exception("Post-scan action error details:")
     
-    async def _handle_auto_exploitation(self, results: List[Dict[str, Any]]):
-        """Handle automatic exploitation based on findings"""
+    async def _handle_auto_exploitation(self, results: List[Dict[str, Any]]) -> None:
+        """Handle automatic exploitation based on scan findings.
+        
+        This method processes scan results to identify and automatically exploit
+        vulnerabilities based on the configured exploitation mode.
+        
+        Args:
+            results: List of vulnerability scan results to process for exploitation.
+            
+        Raises:
+            RuntimeError: If auto-exploitation fails and self.verbose is True.
+        """
+        if not results or not self.auto_exploit:
+            return
+            
         try:
             if self.auto_exploit == 'upload':
-                upload_findings = [r for r in results if r.get('type') == 'upload']
-                for finding in upload_findings:
-                    if self.auto_shell_uploader:
-                        upload_results = await self.auto_shell_uploader.handle_upload_vulnerability(finding)
-                        if upload_results:
-                            color_print(f"Auto-shell upload completed for {finding.get('url')}", 'success')
-            
+                await self._handle_upload_exploitation(results)
             # Add other exploitation types as needed
-            
-        except Exception as e:
-            color_print(f"Auto-exploitation failed: {e}", 'warning')
-    
-    async def _handle_auto_poc_generation(self, results: List[Dict[str, Any]]):
-        """Handle automatic PoC generation"""
-        try:
-            if self.poc_builder:
-                poc_results = await self.poc_builder.generate_batch_pocs(results)
-                if poc_results:
-                    color_print(f"Generated {len(poc_results)} PoCs", 'success')
-                    
-                    # Generate summary report
-                    summary_file = await self.poc_builder.generate_summary_report(results)
-                    if summary_file:
-                        color_print(f"PoC summary: {summary_file}", 'info')
-            
-        except Exception as e:
-            color_print(f"Auto PoC generation failed: {e}", 'warning')
-    
-    async def _handle_payload_learning(self):
-        """Handle payload learning analysis"""
-        try:
-            if self.payload_learning:
-                stats = self.payload_learning.get_statistics()
-                color_print(f"Payload learning stats: {stats['total_payloads']} payloads tested", 'info')
                 
-                # Generate AI analysis
-                analysis = await self.payload_learning.analyze_payload_performance()
-                if analysis.get('ai_analysis'):
-                    color_print("AI payload analysis completed", 'info')
-                
-                # End session
-                self.payload_learning.end_session()
-            
         except Exception as e:
-            color_print(f"Payload learning failed: {e}", 'warning')
+            error_msg = f"Auto-exploitation failed: {e}"
+            color_print(error_msg, 'warning')
+            if self.verbose:
+                logging.exception("Auto-exploitation error details:")
     
-    async def _handle_plugin_execution(self, results: List[Dict[str, Any]]):
-        """Handle plugin execution"""
-        try:
-            if self.plugin_loader:
-                loaded_plugins = self.plugin_loader.get_loaded_plugins()
-                for plugin in loaded_plugins:
-                    plugin_result = await self.plugin_loader.execute_plugin(
-                        plugin['name'], 
-                        self.target or "unknown", 
-                        self.config.get('headers', {})
+    async def _handle_upload_exploitation(
+        self, 
+        results: List[Dict[str, Any]]
+    ) -> None:
+        """Handle automatic file upload exploitation.
+        
+        Args:
+            results: List of scan results to process for upload vulnerabilities.
+        """
+        if not self.auto_shell_uploader:
+            return
+            
+        upload_findings = [r for r in results if r.get('type') == 'upload' and r.get('vulnerable', False)]
+        
+        for finding in upload_findings:
+            try:
+                target_url = finding.get('url', 'unknown')
+                color_print(f"Attempting auto-exploitation for {target_url}...", 'info')
+                
+                upload_results = await self.auto_shell_uploader.handle_upload_vulnerability(finding)
+                
+                if upload_results and upload_results.get('success'):
+                    color_print(
+                        f"Auto-shell upload completed for {target_url}", 
+                        'success'
                     )
-                    if plugin_result:
-                        color_print(f"Plugin {plugin['name']} executed successfully", 'info')
+                    finding['exploitation'] = {
+                        'status': 'success',
+                        'timestamp': datetime.utcnow().isoformat(),
+                        'details': upload_results
+                    }
+                else:
+                    error_msg = upload_results.get('error', 'Unknown error')
+                    color_print(
+                        f"Auto-shell upload failed for {target_url}: {error_msg}", 
+                        'warning'
+                    )
+                    finding['exploitation'] = {
+                        'status': 'failed',
+                        'timestamp': datetime.utcnow().isoformat(),
+                        'error': error_msg
+                    }
+                    
+            except Exception as e:
+                error_msg = str(e)
+                color_print(
+                    f"Error during exploitation of {finding.get('url', 'unknown')}: {error_msg}", 
+                    'error'
+                )
+                if self.verbose:
+                    logging.exception("Exploitation error details:")
+    
+    async def _handle_auto_poc_generation(self, results: List[Dict[str, Any]]) -> None:
+        """Handle automatic generation of Proof of Concept (PoC) exploits.
+        
+        This method processes scan results to generate proof of concept exploits
+        for identified vulnerabilities.
+        
+        Args:
+            results: List of vulnerability scan results to generate PoCs for.
+            
+        Raises:
+            RuntimeError: If PoC generation fails and self.verbose is True.
+        """
+        if not results or not self.poc_builder:
+            return
+            
+        try:
+            # Filter only vulnerable results that can have PoCs generated
+            vulnerable_results = [
+                r for r in results 
+                if r.get('vulnerable', False) and r.get('type') not in ['info', 'unknown']
+            ]
+            
+            if not vulnerable_results:
+                color_print("No vulnerabilities found that require PoC generation", 'info')
+                return
+                
+            color_print(f"Generating PoCs for {len(vulnerable_results)} vulnerabilities...", 'info')
+            
+            # Generate individual PoCs
+            poc_results = await self.poc_builder.generate_batch_pocs(vulnerable_results)
+            
+            if not poc_results:
+                color_print("No PoCs were generated", 'warning')
+                return
+                
+            success_count = sum(1 for r in poc_results if r.get('success', False))
+            color_print(
+                f"Successfully generated {success_count}/{len(poc_results)} PoCs", 
+                'success' if success_count > 0 else 'warning'
+            )
+            
+            # Generate summary report
+            try:
+                summary_file = await self.poc_builder.generate_summary_report(vulnerable_results)
+                if summary_file and isinstance(summary_file, (str, Path)):
+                    color_print(f"PoC summary report: {summary_file}", 'info')
+                    
+                    # Add report location to results
+                    for result in vulnerable_results:
+                        if 'reports' not in result:
+                            result['reports'] = {}
+                        result['reports']['poc_summary'] = str(summary_file)
+                        
+            except Exception as report_error:
+                error_msg = f"Failed to generate PoC summary: {report_error}"
+                color_print(error_msg, 'warning')
+                if self.verbose:
+                    logging.exception("PoC summary generation error:")
+            
+            # Update results with PoC generation status
+            for idx, result in enumerate(vulnerable_results):
+                if idx < len(poc_results) and 'poc' not in result:
+                    poc_info = poc_results[idx]
+                    result['poc'] = {
+                        'status': 'generated' if poc_info.get('success') else 'failed',
+                        'timestamp': datetime.utcnow().isoformat(),
+                        'details': poc_info
+                    }
+                    
+        except Exception as e:
+            error_msg = f"Auto PoC generation failed: {e}"
+            color_print(error_msg, 'error')
+            if self.verbose:
+                logging.exception("PoC generation error details:")
+                
+            # Log partial results if available
+            if 'poc_results' in locals() and poc_results:
+                logging.error("Partial PoC results: %s", poc_results)
+    
+    async def _handle_payload_learning(self) -> None:
+        """Handle payload learning analysis and AI-assisted insights.
+        
+        This method processes payload learning statistics, generates AI analysis,
+        and cleans up learning resources.
+        
+        Raises:
+            RuntimeError: If payload learning encounters an error and self.verbose is True.
+        """
+        if not self.payload_learning:
+            return
+            
+        try:
+            # Get and log learning statistics
+            stats = self.payload_learning.get_statistics()
+            if isinstance(stats, dict) and 'total_payloads' in stats:
+                color_print(
+                    f"Payload learning stats: {stats['total_payloads']} payloads tested", 
+                    'info'
+                )
+                
+                # Generate AI analysis if there are payloads to analyze
+                if stats['total_payloads'] > 0:
+                    try:
+                        analysis = await self.payload_learning.analyze_payload_performance()
+                        if analysis and analysis.get('ai_analysis'):
+                            color_print("AI payload analysis completed", 'info')
+                            
+                            # Store analysis results in the learning session
+                            if hasattr(self.payload_learning, 'store_analysis'):
+                                await self.payload_learning.store_analysis(analysis)
+                        else:
+                            color_print("No significant patterns found in payload analysis", 'info')
+                            
+                    except Exception as analysis_error:
+                        error_msg = f"AI analysis failed: {analysis_error}"
+                        color_print(error_msg, 'warning')
+                        if self.verbose:
+                            logging.exception("Payload analysis error:")
+                else:
+                    color_print("No payloads available for analysis", 'info')
+            
+            # Clean up learning resources
+            try:
+                if hasattr(self.payload_learning, 'end_session'):
+                    self.payload_learning.end_session()
+                    color_print("Payload learning session ended", 'info')
+            except Exception as cleanup_error:
+                error_msg = f"Error cleaning up payload learning: {cleanup_error}"
+                color_print(error_msg, 'warning')
+                if self.verbose:
+                    logging.exception("Payload learning cleanup error:")
             
         except Exception as e:
-            color_print(f"Plugin execution failed: {e}", 'warning')
+            error_msg = f"Payload learning failed: {e}"
+            color_print(error_msg, 'error')
+            if self.verbose:
+                logging.exception("Payload learning error details:")
+    
+    async def _handle_plugin_execution(self, results: List[Dict[str, Any]]) -> None:
+        """Execute all loaded plugins with the scan results.
+        
+        This method runs each loaded plugin with the scan results and target information,
+        handling any errors that occur during plugin execution.
+        
+        Args:
+            results: List of scan results to pass to plugins.
+            
+        Raises:
+            RuntimeError: If plugin execution fails and self.verbose is True.
+        """
+        if not self.plugin_loader or not hasattr(self.plugin_loader, 'get_loaded_plugins'):
+            return
+            
+        try:
+            loaded_plugins = self.plugin_loader.get_loaded_plugins()
+            if not loaded_plugins:
+                color_print("No plugins loaded for execution", 'info')
+                return
+                
+            color_print(f"Executing {len(loaded_plugins)} plugins...", 'info')
+            
+            successful_plugins = 0
+            target = self.target or "unknown"
+            headers = self.config.get('headers', {})
+            
+            for plugin in loaded_plugins:
+                plugin_name = plugin.get('name', 'unnamed_plugin')
+                
+                try:
+                    color_print(f"Executing plugin: {plugin_name}", 'info')
+                    
+                    # Execute plugin with timeout to prevent hanging
+                    try:
+                        plugin_result = await asyncio.wait_for(
+                            self.plugin_loader.execute_plugin(plugin_name, target, headers, results),
+                            timeout=300  # 5 minute timeout per plugin
+                        )
+                        
+                        if plugin_result:
+                            success = plugin_result.get('success', False)
+                            message = plugin_result.get('message', 'No output')
+                            
+                            if success:
+                                color_print(
+                                    f"Plugin {plugin_name} executed successfully: {message}", 
+                                    'success'
+                                )
+                                successful_plugins += 1
+                                
+                                # Store plugin results in the first matching result
+                                if results and isinstance(results, list):
+                                    if 'plugin_results' not in results[0]:
+                                        results[0]['plugin_results'] = {}
+                                    results[0]['plugin_results'][plugin_name] = plugin_result
+                            else:
+                                color_print(
+                                    f"Plugin {plugin_name} completed with issues: {message}", 
+                                    'warning'
+                                )
+                        else:
+                            color_print(
+                                f"Plugin {plugin_name} returned no result", 
+                                'warning'
+                            )
+                            
+                    except asyncio.TimeoutError:
+                        error_msg = f"Plugin {plugin_name} timed out after 5 minutes"
+                        color_print(error_msg, 'error')
+                        if self.verbose:
+                            logging.error(error_msg)
+                    
+                except Exception as plugin_error:
+                    error_msg = f"Error executing plugin {plugin_name}: {plugin_error}"
+                    color_print(error_msg, 'error')
+                    if self.verbose:
+                        logging.exception("Plugin execution error:")
+            
+            # Log summary of plugin execution
+            color_print(
+                f"Plugin execution complete: {successful_plugins}/{len(loaded_plugins)} "
+                f"plugins executed successfully",
+                'success' if successful_plugins > 0 else 'warning'
+            )
+            
+        except Exception as e:
+            error_msg = f"Plugin execution failed: {e}"
+            color_print(error_msg, 'error')
+            if self.verbose:
+                logging.exception("Plugin execution error details:")
     
     async def generate_reports(self, results: List[Dict[str, Any]]):
         """Generate reports using the selected template and client name"""

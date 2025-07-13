@@ -2,50 +2,77 @@
 
 ## Supported Versions
 
-Use this section to tell people about which versions of your project are currently being supported with security updates.
-
-| Version | Supported          |
-| ------- | ------------------ |
-| 1.0.x   | :white_check_mark: |
-| < 1.0   | :x:                |
+| Version | Status          | Security Updates Until |
+| ------- | --------------- | ---------------------- |
+| 1.0.x   | :white_check_mark: Active       | TBD                    |
+| < 1.0   | :x: Unsupported  | -                      |
 
 ## Reporting a Vulnerability
 
-We take security vulnerabilities seriously. If you discover a security vulnerability in VulnBuster, please follow these steps:
+We take security vulnerabilities extremely seriously and appreciate your efforts to responsibly disclose any issues you find.
 
-### 1. **DO NOT** create a public GitHub issue
-Security vulnerabilities should be reported privately to prevent potential exploitation.
+### 1. **IMPORTANT**: Do Not Create Public Issues
+- Security vulnerabilities should be reported **privately** to prevent potential exploitation
+- Public GitHub issues are not the appropriate place for security reports
 
-### 2. Email us at security@vulnbuster.com
-Send a detailed report including:
-- Description of the vulnerability
-- Steps to reproduce
-- Potential impact
-- Suggested fix (if any)
-- Your contact information
+### 2. How to Report
+Please email our security team at security@vulnbuster.com with the subject line: `[SECURITY] Vulnerability Report`
 
-### 3. What to expect
-- We will acknowledge receipt within 48 hours
-- We will investigate and provide updates
-- We will work with you to fix the issue
-- We will credit you in the security advisory (unless you prefer to remain anonymous)
+Include the following details in your report:
+- **Description**: Clear explanation of the vulnerability
+- **Impact**: Potential security impact and worst-case scenario
+- **Steps to Reproduce**: Detailed reproduction steps (code, config, etc.)
+- **Environment**: OS, Python version, dependencies
+- **Mitigation**: Any known workarounds or mitigations
+- **Disclosure**: Your preference for public credit
 
-### 4. Responsible disclosure timeline
-- **Day 0**: Vulnerability reported
-- **Day 1-2**: Acknowledgment and initial assessment
-- **Day 3-7**: Investigation and fix development
-- **Day 8-14**: Testing and validation
-- **Day 15**: Public disclosure and patch release
+### 3. Our Response Process
+
+1. **Acknowledgment**
+   - Within 24 hours (weekdays)
+   - You'll receive a tracking number for reference
+
+2. **Investigation**
+   - Initial assessment within 72 hours
+   - We may request additional information
+
+3. **Resolution**
+   - Regular updates on our progress
+   - Coordinated fix development
+   - Security advisory preparation
+
+4. **Disclosure**
+   - Public announcement after patch release
+   - Credit to reporters (unless requested otherwise)
+
+### 4. Responsible Disclosure Timeline
+
+| Timeline         | Action                                 |
+|------------------|----------------------------------------|
+| Day 0           | Vulnerability reported                |
+| Day 1           | Acknowledgment sent                   |
+| Day 1-3         | Initial assessment                    |
+| Day 3-7         | Fix development                       |
+| Day 7-10        | Internal testing & validation         |
+| Day 10-14       | Security advisory preparation         |
+| Day 14          | Patch release & public disclosure     |
 
 ## Security Best Practices
 
 ### For Users
-- Keep VulnBuster updated to the latest version
-- Use in controlled, authorized environments only
-- Follow responsible disclosure when testing
-- Never test against production systems without permission
-- Use strong authentication for API keys
-- Regularly rotate credentials
+- **Keep Updated**: Always use the latest version of VulnBuster
+- **Environment**: Run in controlled, isolated environments only
+- **Authentication**: Use strong, unique API keys and credentials
+- **Monitoring**: Monitor for unusual activity in your scans
+- **Backup**: Regularly back up your configuration and scan results
+- **Network**: Run behind a firewall with minimal required ports open
+- **Permissions**: Follow the principle of least privilege
+
+### For Security Researchers
+- **Scope**: Only test systems you own or have explicit permission to test
+- **Documentation**: Review project documentation before testing
+- **Impact**: Avoid actions that could cause damage or disruption
+- **Communication**: Maintain clear, professional communication
 
 ### For Contributors
 - Follow secure coding practices
