@@ -405,6 +405,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ---
 
-**Built with ❤️ by the VulnBuster Team**
+**Built with ❤️ by Av7danger**
 
 *Empowering security researchers with AI-powered offensive security tools.* 
